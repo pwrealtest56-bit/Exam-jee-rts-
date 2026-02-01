@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEE RTS Portal - Ultimate Edition</title>
+    <style>
+        /* --- GLOBAL STYLES --- */
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #f4f6f9; color: #333; }
+        
+        /* HEADER */
+        .header { background: #003366; color: white; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .header h1 { margin: 0; font-size: 22px; }
+
+        /* CONTAINER */
+        .container { max-width: 950px; margin: 30px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-height: 500px; }
+
+        /* COMMON ELEMENTS */
+        .btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; transition: 0.3s; }
+        .btn-blue { background: #0056b3; } .btn-blue:hover { background: #004494; }
+        .btn-green { background: #28a745; } .btn-green:hover { background: #218838; }
+        .btn-red { background: #dc3545; } .btn-red:hover { background: #c82333; }
+        .btn-gray { background: #6c757d; }
+
+        input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
+
+        /* PAGES */
+        .page { display: none; }
+        #loginPage { display: block; } /* Initial Page */
+
+        /* --- DASHBOARD SPECIFIC --- */
+        .timer-box {
+            background: linear-gradient(135deg, #003366, #0056b3);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .timer-time { font-size: 28px; font-weight: bold; letter-spacing: 1px; margin-top: 5px; color: #ffeb3b; }
+
+        .schedule-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        .schedule-table th { background: #003366; color: white; padding: 10px; }
+        .schedule-table td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .schedule-table tr:nth-child(even) { background: #f9f9f9; }
+
+        /* --- ADMIN PANEL SPECIFIC --- */
+        .admin-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: center; margin-bottom: 10px; padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; }
+        
+        /* --- REAL ADMIT CARD STYLE (Hidden until generated) --- */
+        #printableAdmitCard {
+            display: none; /* Hidden normally */
+            border: 2px solid #000;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+        .ac-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+        .ac-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 20px; }
+        .ac-details p { margin: 5px 0; border-bottom: 1px dotted #ccc; padding: 5px 0; font-size: 14px; }
+        .ac-photo { border: 1px solid #000; height: 150px; width: 130px; display: flex; align-items: center; justify-content: center; background: #eee; margin: 0 auto; }
+        .ac-footer { margin-top: 30px; border-top: 1px solid #000; padding-top: 10px; font-size: 12px; text-align: center; }
+
+        /* --- PRINT MEDIA QUERY --- */
+        @media print {
+            body * { visibility: hidden; }
+            #printableAdmitCard, #printableAdmitCard * { visibility: visible; }
+            #printableAdmitCard { position: absolute; left: 0; top: 0; width: 100%; display: block !important; border: none; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header no-print">
+        <h1>JEE RTS EXAMINATION PORTAL</h1>
+        <p>Advanced Examination Management System</p>
+    </div>
+
+    <div class="container no-print">
+
+        <div id="loginPage" class="page">
+            <h2 style="text-align: center; color: #003366;">Secure Login</h2>
+            <hr>
+            <div style="max-width: 400px; margin: 0 auto;">
+                <label>User ID</label>
+                <input type="text" id="userId" placeholder="ID" style="margin-bottom: 15px;">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Password" style="margin-bottom: 20px;">
+                <button class="btn btn-blue" style="width: 100%;" onclick="handleLogin()">Login</button>
+                <p id="loginError" style="color: red; text-align: center; margin-top: 10px;"></p>
+                <p style="font-size: 12px; color: #777; text-align: center; margin-top: 20px;">
+                    Student: <b>SHUBHAM@25022010</b> / <b>25022010</b><br>
+                    Admin: <b>admin123</b> / <b>2345</b>
+                </p>
+            </div>
+        </div>
+
+        <div id="adminPage" class="page">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="color: #dc3545;">Admin Control</h2>
+                <button class="btn btn-gray" onclick="logout()">Logout</button>
+            </div>
+            <p>Set Dates & Enter Marks for Results.</p>
+            <hr>
+            
+            <div style="margin-bottom: 20px;">
+                <label><strong>Exam Mode:</strong></label>
+                <select id="adminGlobalMode" style="max-width: 200px;">
+                    <option value="Online (CBT)">Online (CBT)</option>
+                    <option value="Offline (Pen & Paper)">Offline</option>
+                </select>
+            </div>
+
+            <div id="adminInputsList">
+                </div>
+
+            <button class="btn btn-green" style="width: 100%; margin-top: 20px;" onclick="saveAdminData()">Save All Changes</button>
+            <p id="saveMsg" style="color: green; text-align: center; display: none; margin-top: 10px;">Data Saved Successfully!</p>
+        </div>
+
+        <div id="dashboardPage" class="page">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="color: #003366;">Student Dashboard</h2>
+                <button class="btn btn-gray" onclick="logout()">Logout</button>
+            </div>
+            <p>Welcome, <b>SHUBHAM</b> | Roll No: <b>25022010</b></p>
+            
+            <div class="timer-box">
+                <div style="font-size: 14px; opacity: 0.8;">UPCOMING EXAM COUNTDOWN</div>
+                <div id="timerDisplay" class="timer-time">00d 00h 00m 00s</div>
+                <div id="timerExamName" style="font-size: 14px; margin-top: 5px;">Loading...</div>
+            </div>
+
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th>Exam Name</th>
+                        <th>Date</th>
+                        <th>Status / Action</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                    </tbody>
+            </table>
+        </div>
+
+        <div id="resultPage" class="page" style="text-align: center; padding: 40px;">
+            <h2 style="color: green;">Result Statement</h2>
+            <div style="border: 2px solid green; padding: 20px; border-radius: 10px; display: inline-block; min-width: 300px;">
+                <h1 id="resScore" style="font-size: 48px; margin: 10px 0;">--</h1>
+                <p>Marks Obtained out of 300</p>
+                <hr>
+                <p>Exam: <b id="resExamName">--</b></p>
+                <p>Status: <b style="color: green;">QUALIFIED</b></p>
+            </div>
+            <br><br>
+            <button class="btn btn-blue" onclick="showPage('dashboardPage')">Back to Dashboard</button>
+        </div>
+
+    </div>
+
+    <div id="printableAdmitCard">
+        <div class="ac-header">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/IIT_Jee_Logo.png/640px-IIT_Jee_Logo.png" width="60" style="vertical-align: middle;">
+            <span style="font-size: 24px; font-weight: bold; vertical-align: middle; margin-left: 10px;">JEE (RTS) ADMIT CARD - 2026</span>
+            <p style="margin: 5px 0 0 0;">Joint Entrance Examination (Real Test Series)</p>
+        </div>
+
+        <div class="ac-grid">
+            <div class="ac-details">
+                <p><strong>Candidate Name:</strong> SHUBHAM</p>
+                <p><strong>Roll Number:</strong> 25022010</p>
+                <p><strong>Date of Birth:</strong> 25-02-2010</p>
+                <p><strong>Gender:</strong> Male</p>
+                <p><strong>Category:</strong> GEN-EWS</p>
+                <br>
+                <p><strong>Examination Name:</strong> <span id="acExamName">RTS-01</span></p>
+                <p><strong>Date of Exam:</strong> <span id="acExamDate">--</span></p>
+                <p><strong>Reporting Time:</strong> 01:00 PM</p>
+                <p><strong>Mode of Exam:</strong> <span id="acMode">Online</span></p>
+                <p><strong>Test Centre:</strong> PHYSICS WALLAH TOWER,DURGAKUND,VARANASI, UP</p>
+            </div>
+            <div style="text-align: center;">
+                <div class="ac-photo">
+                    <span style="color: #777;">PHOTO</span>
+                </div>
+                <br>
+                <div style="border: 1px solid #000; height: 40px; display: flex; align-items: center; justify-content: center;">
+                    SIGNATURE
+                </div>
+            </div>
+        </div>
+
+        <div class="ac-footer">
+            <p>IMPORTANT: This Admit Card is electronically generated. Candidates must bring a valid Govt ID proof.</p>
+            <p><strong>Controller of Examinations, JEE RTS</strong></p>
+        </div>
+        
+        <div class="no-print" style="text-align: center; margin-top: 20px;">
+            <button class="btn btn-green" onclick="window.print()">Print / Save PDF</button>
+            <button class="btn btn-red" onclick="closeAdmitCard()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA MANAGEMENT ---
+        function getData() {
+            const stored = localStorage.getItem('jeeRtsData_v2');
+            if (stored) return JSON.parse(stored);
+
+            // Default Initial Data
+            const today = new Date();
+            let exams = [];
+            for (let i = 1; i <= 8; i++) {
+                // Creates dates spaced 1 week apart from today
+                let d = new Date();
+                d.setDate(today.getDate() + (i * 7)); 
+                exams.push({
+                    id: i,
+                    name: `JEE RTS - 0${i}`,
+                    date: d.toISOString().split('T')[0], // YYYY-MM-DD
+                    marks: "" // Empty initially
+                });
+            }
+            return { mode: 'Online (CBT)', exams: exams };
+        }
+
+        function saveData(data) {
+            localStorage.setItem('jeeRtsData_v2', JSON.stringify(data));
+        }
+
+        // --- NAVIGATION ---
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            document.getElementById('printableAdmitCard').style.display = 'none';
+            document.querySelector('.container').style.display = 'block'; // Ensure container is visible
+            document.getElementById(pageId).style.display = 'block';
+        }
+
+        function logout() {
+            document.getElementById('userId').value = "";
+            document.getElementById('password').value = "";
+            showPage('loginPage');
+        }
+
+        // --- LOGIN LOGIC ---
+        function handleLogin() {
+            const u = document.getElementById('userId').value;
+            const p = document.getElementById('password').value;
+            
+            if (u === "admin123" && p === "2345") {
+                renderAdmin();
+                showPage('adminPage');
+            } else if (u === "SHUBHAM@25022010" && p === "25022010") {
+                renderStudent();
+                showPage('dashboardPage');
+            } else {
+                document.getElementById('loginError').innerText = "Invalid Credentials";
+            }
+        }
+
+        // --- ADMIN LOGIC ---
+        function renderAdmin() {
+            const data = getData();
+            document.getElementById('adminGlobalMode').value = data.mode;
+            const list = document.getElementById('adminInputsList');
+            list.innerHTML = '';
+
+            data.exams.forEach((exam, idx) => {
+                list.innerHTML += `
+                    <div class="admin-row">
+                        <span style="font-weight:bold;">${exam.name}</span>
+                        <div>
+                            <small>Date:</small><br>
+                            <input type="date" id="date-${idx}" value="${exam.date}">
+                        </div>
+                        <div>
+                            <small>Marks (if done):</small><br>
+                            <input type="number" id="marks-${idx}" placeholder="Out of 300" value="${exam.marks}">
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function saveAdminData() {
+            const data = getData();
+            data.mode = document.getElementById('adminGlobalMode').value;
+            
+            data.exams.forEach((exam, idx) => {
+                exam.date = document.getElementById(`date-${idx}`).value;
+                exam.marks = document.getElementById(`marks-${idx}`).value;
+            });
+
+            saveData(data);
+            const msg = document.getElementById('saveMsg');
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 2000);
+        }
+
+        // --- STUDENT LOGIC ---
+        let timerInterval;
+
+        function renderStudent() {
+            const data = getData();
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = '';
+            
+            let nextExam = null;
+            const now = new Date();
+
+            data.exams.forEach(exam => {
+                const examDate = new Date(exam.date);
+                let actionBtn = '';
+                
+                // Logic: 
+                // 1. If Marks exist -> Show Result
+                // 2. If No Marks, but Date is future -> Show Admit Card
+                // 3. If No Marks, Date Passed -> Show "Pending"
+
+                if (exam.marks && exam.marks !== "") {
+                    actionBtn = `<button class="btn btn-green" onclick="viewResult('${exam.name}', '${exam.marks}')">View Result</button>`;
+                } else if (examDate >= now || isSameDay(examDate, now)) {
+                    actionBtn = `<button class="btn btn-blue" onclick="generateAdmitCard(${exam.id})">Admit Card</button>`;
+                    // Determine Next Exam for Timer (First future date found)
+                    if (!nextExam) nextExam = { name: exam.name, date: examDate };
+                } else {
+                    actionBtn = `<span style="color: red; font-weight: bold;">Result Awaited</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${exam.name}</strong></td>
+                        <td>${new Date(exam.date).toLocaleDateString()}</td>
+                        <td>${actionBtn}</td>
+                    </tr>
+                `;
+            });
+
+            // Start Timer
+            if (timerInterval) clearInterval(timerInterval);
+            if (nextExam) {
+                startTimer(nextExam);
+            } else {
+                document.getElementById('timerDisplay').innerText = "ALL EXAMS COMPLETED";
+                document.getElementById('timerExamName').innerText = "";
+            }
+        }
+
+        function isSameDay(d1, d2) {
+            return d1.getFullYear() === d2.getFullYear() &&
+                   d1.getMonth() === d2.getMonth() &&
+                   d1.getDate() === d2.getDate();
+        }
+
+        // --- TIMER LOGIC ---
+        function startTimer(exam) {
+            document.getElementById('timerExamName').innerText = "Next: " + exam.name;
+            
+            timerInterval = setInterval(() => {
+                const now = new Date().getTime();
+                const target = exam.date.getTime(); // 00:00:00 of that day
+                const distance = target - now;
+
+                if (distance < 0) {
+                    // If exam is today or just started
+                    document.getElementById('timerDisplay').innerText = "EXAM IS LIVE / TODAY";
+                } else {
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    document.getElementById('timerDisplay').innerText = 
+                        `${days}d ${hours}h ${minutes}m`;
+                }
+            }, 1000);
+        }
+
+        // --- RESULT LOGIC ---
+        function viewResult(name, marks) {
+            showPage('resultPage');
+            document.getElementById('resExamName').innerText = name;
+            document.getElementById('resScore').innerText = marks;
+        }
+
+        // --- ADMIT CARD GENERATOR ---
+        function generateAdmitCard(id) {
+            const data = getData();
+            const exam = data.exams.find(e => e.id == id);
+            
+            // Hide normal UI, Show Admit Card Div
+            document.querySelector('.container').style.display = 'none';
+            document.getElementById('printableAdmitCard').style.display = 'block';
+
+            // Fill Details
+            document.getElementById('acExamName').innerText = exam.name;
+            document.getElementById('acExamDate').innerText = new Date(exam.date).toLocaleDateString();
+            document.getElementById('acMode').innerText = data.mode;
+        }
+
+        function closeAdmitCard() {
+            document.getElementById('printableAdmitCard').style.display = 'none';
+            document.querySelector('.container').style.display = 'block';
+            showPage('dashboardPage');
+        }
+
+    </script>
+</body>
+</html>
